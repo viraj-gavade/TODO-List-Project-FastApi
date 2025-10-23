@@ -29,5 +29,5 @@ def get_single_task(id : int):
 
 ## Route to delete the single task
 @taskRouter.delete('/{id}')
-def get_task():
+def delete_task():
     return deleteTaskById(id)
