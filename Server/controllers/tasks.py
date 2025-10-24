@@ -7,17 +7,16 @@ from fastapi import Depends
 from fastapi.responses import JSONResponse
 from schema.tasks_shemas import taskSchema, UpdateTaskSchema
 models.tasks_model.Base.metadata.create_all(engine)
+from utils.exception import * 
+from utils.response import CustomResponse
 
-
-
+## Fucntion to create a Task 
 def createTask( task : taskSchema , db: Session = Depends(ConnectDB) ):
-    
-
+    '''
+    This function creates a task in tha database.
+    '''
     if (db.query(TaskModel).filter(TaskModel.id == task.id).first()): 
-         return JSONResponse(
-            content={'message':" Task with this id already exists"},
-            status_code=200
-        )
+          return TaskAlreadyExists(name=f'Id : {task.id}')
     else:
         new_task =  new_task = TaskModel(
         name=task.name,
@@ -25,64 +24,68 @@ def createTask( task : taskSchema , db: Session = Depends(ConnectDB) ):
         isDone=task.isDone,
         date=task.date
     )
+        
         db.add(new_task)
         db.commit()
         db.refresh(new_task)
         
-        return JSONResponse(
-                content={'message':" task created successfully!",'Tasks':jsonable_encoder(new_task)},
-                status_code=200
-            )
+        return CustomResponse.success(
+            message="Task created successfully!",
+            data=jsonable_encoder(new_task)
+        )   
     
     
-
+    
+## Fucntion to get all the tasks from the database
 def getAllTasks(db:Session = Depends(ConnectDB)):
+    
+    '''
+    This function fetches all the tasks from the database.
+    '''
     tasks = db.query(TaskModel).all()
-    if len(tasks) != 0 :
-        return JSONResponse(
-            content={'message':"All tasks retured successfully!",'Tasks': jsonable_encoder(tasks)},
-            status_code=200
-        )
-    return JSONResponse(
-            content={'message':"No Taks Found!"},
-            status_code=204
-    )
+    if tasks :
+         return CustomResponse.success(
+           message='All Tasks Fetched Successfully!',
+           data= jsonable_encoder(tasks)
+       )
+    else:
+        return TaskNotFound(name = f'No Tasks')
 
 
 def getTaskById(id: int, db: Session = Depends(ConnectDB)):
     task = db.query(TaskModel).filter(TaskModel.id == id).first()
-    
     if task:
-        return {
-            "message": "Task Found Successfully!",
-            "task": jsonable_encoder(task) 
-        }
+        return CustomResponse.success(
+           message='Task Fetched Successfully!',
+           data= jsonable_encoder(task)
+       )
     else:
-        return JSONResponse(
-            content={"message": "No Task Found!"},
-            status_code=404  #
-        )
+        return TaskNotFound(name=f'id : {id}')
 
 
 
 def deleteTaskById(id:int,db: Session = Depends(ConnectDB)):
+    
+    '''
+    This function Fetches a single task by the given id 
+    '''
     task = db.query(TaskModel).filter(TaskModel.id == id).first()
     
     if task:
         db.delete(task)
         db.commit()
-        return {
-            "message": "Task deleted Successfully!",
-        }
+        return CustomResponse.success(
+           message='Task Deleted  Successfully!',
+           data= jsonable_encoder(task)
+       )
     else:
-        return JSONResponse(
-            content={"message": "No Task Found!"},
-            status_code=404  
-        )
+         return TaskNotFound(name=f'id : {id}')
 
 
 def updateTaskId(updated_task : UpdateTaskSchema , id:int ,db: Session = Depends(ConnectDB)):
-
+    '''
+    This function updates the task with the help of given id 
+    '''
     task = db.query(TaskModel).filter(TaskModel.id == id).first()
     if task:
         update_data = updated_task.model_dump(exclude_unset=True)
@@ -90,23 +93,20 @@ def updateTaskId(updated_task : UpdateTaskSchema , id:int ,db: Session = Depends
             setattr(task, key , value)
         db.commit()
         db.refresh(task)
-
-        
-
-
-        return {
-            "message": "Task updated Successfully!",
-            'Task':jsonable_encoder(task)
-        }
+        return CustomResponse.success(
+           message='Task updated Successfully!',
+           data= jsonable_encoder(task)
+       )
     else:
-        return JSONResponse(
-            content={"message": "No Task Found!"},
-            status_code=404  #
-        )
+        return TaskNotFound(name=f'id : {id}')
     
 
 
 def toggleIsDoneFlag(id: int, db: Session = Depends(ConnectDB)):
+    '''
+    This function  toggles the status of the task from done to
+    undone and vice versa
+    '''
     task = db.query(TaskModel).filter(TaskModel.id == id).first()
     
     if task:
@@ -114,13 +114,10 @@ def toggleIsDoneFlag(id: int, db: Session = Depends(ConnectDB)):
         db.commit()                    
         db.refresh(task)               # 
 
-        return {
-            "message": "Task status updated successfully!",
-            "task": jsonable_encoder(task) 
-        }
+        return CustomResponse.success(
+           message='Task Status changed Successfully!',
+           data= jsonable_encoder(task)
+       )
     else:
-        return JSONResponse(
-            content={"message": "No Task Found!"},
-            status_code=404
-        )
+         return TaskNotFound(name=f'id : {id}')
         
