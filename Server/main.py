@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from routes.tasks_routes import taskRouter
 from fastapi.middleware.cors import CORSMiddleware
+from  routes.auth_routes import authRouter
 
 app = FastAPI()
 
@@ -22,3 +23,4 @@ app.add_middleware(
 
 # Include your routers
 app.include_router(taskRouter, prefix='/tasks', tags=['tasks'])
+app.include_router(authRouter ,  prefix='/auth' , tags=['auth'])
