@@ -2,7 +2,10 @@ from fastapi import FastAPI
 from routes.tasks_routes import taskRouter
 from fastapi.middleware.cors import CORSMiddleware
 from  routes.auth_routes import authRouter
+import models
+from DataBase.connect import engine
 
+models.tasks_model.Base.metadata.create_all(engine)
 app = FastAPI()
 
 origins = [

@@ -10,7 +10,6 @@ class TaskModel(Base):
     description = Column(String(255))
     isDone = Column(Boolean, default=False)
     date = Column(Date, default=func.current_date())
-
     createdBy = Column(Integer,ForeignKey('Users.id'),nullable=True)
 
     owner = relationship('UserModel',back_populates='tasks')
